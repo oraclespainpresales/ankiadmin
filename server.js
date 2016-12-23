@@ -14,9 +14,7 @@ var express = require('express')
 
 log.level     ='verbose';
 log.timestamp = true;
-
 const PROCESS = 'PROCESS';
-log.info(PROCESS, "Caught interrupt signal");
 
 // Instantiate classes & servers
 var app    = express()
