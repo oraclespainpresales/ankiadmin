@@ -36,8 +36,8 @@ process.on('uncaughtException', function (err) {
 });
 // Detect CTRL-C
 process.on('SIGINT', function() {
-  console.info(PROCESS, "Caught interrupt signal");
-  console.info(PROCESS, "Exiting gracefully");
+  log.info(PROCESS, "Caught interrupt signal");
+  log.info(PROCESS, "Exiting gracefully");
   process.exit(2);
 });
 // Main handlers registration - END
