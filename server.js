@@ -113,7 +113,6 @@ router.put(RACE + RACEOP, function(req, res) {
         res.status(204).send({ raceid: r });
       });
     });
-    res.status(201).send();
   } else if (op.toLowerCase() === "stop") {
     res.status(204).send();
   } else {
