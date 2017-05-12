@@ -56,6 +56,14 @@ const RACEIDFILE = process.env.HOME + '/setup/race_count.dat';
 const username = 'pi';
 const hashedPassword = 'sha1$0dca8e1b$1$af147f228501f5a55390ccdf7085e319c513311c';
 
+function setRaceId(id, callback) {
+  fs.writeFile(RACEIDFILE, id, callback);
+}
+
+function getRaceId(callback) {
+  fs.readFile(RACEIDFILE, 'utf8', callback);
+}
+
 // REST stuff - BEGIN
 router.post(RACEID + RACEIDPARAM, function(req, res) {
   log.verbose(PROCESS, "Set raceid with: %j", req.params);
@@ -64,7 +72,7 @@ router.post(RACEID + RACEIDPARAM, function(req, res) {
     res.status(400).send({ error: "You must enter a valid positive number for Race Id"});
     return;
   }
-  fs.writeFile(RACEIDFILE, newRaceId, (err) => {
+  setRaceId(newRaceId, (err) => {
     if (err) {
       console.log(err);
       res.status(500).send(err);
@@ -75,7 +83,7 @@ router.post(RACEID + RACEIDPARAM, function(req, res) {
 });
 router.get(RACEID, function(req, res) {
   log.verbose(PROCESS, "Get raceid");
-  fs.readFile(RACEIDFILE, 'utf8', (err, data) => {
+  getRaceId((err, data) => {
     if (err) {
       console.log(err);
       res.status(500).send(err);
@@ -89,11 +97,27 @@ router.put(RACE + RACEOP, function(req, res) {
   log.verbose(PROCESS, "Operate race with: %j", req.params);
   var op = req.params.raceop;
   if (op.toLowerCase() === "start") {
+    getRaceId((err, data) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send(err);
+        return;
+      }
+      var r = parseInt(data) + 1;
+      setRaceId(r, (err) => {
+        if (err) {
+          console.log(err);
+          res.status(500).send(err);
+          return;
+        }
+        res.status(204).send({ raceid: r });
+      });
+    });
     res.status(201).send();
   } else if (op.toLowerCase() === "stop") {
     res.status(204).send();
   } else {
-    res.status(400).send();
+    res.status(404).send();
   }
 });
 
