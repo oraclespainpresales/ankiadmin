@@ -43,6 +43,8 @@ process.on('SIGINT', function() {
 // REST engine initial setup
 const PORT = process.env.ADMINPORT || 9009;
 const URI = '/admin';
+const RACE = '/race';
+const RACEOP = '/:raceop';
 const RACEID = '/raceid';
 const RACEIDPARAM = '/:raceid';
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -81,6 +83,18 @@ router.get(RACEID, function(req, res) {
     }
     res.status(200).send({ raceid: data });
   });
+});
+
+router.put(RACE + RACEOP, function(req, res) {
+  log.verbose(PROCESS, "Operate race with: %j", req.params);
+  var op = req.params.raceop;
+  if (op.toLowerCase() === "start") {
+    res.status(201).send();
+  } else if (op.toLowerCase() === "stop") {
+    res.status(204).send();
+  } else {
+    res.status(400).send();
+  }
 });
 
 function myAuthorizer(_username, _password) {
