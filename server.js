@@ -110,7 +110,7 @@ router.put(RACE + RACEOP, function(req, res) {
           res.status(500).send(err);
           return;
         }
-        res.status(204).send({ raceid: r });
+        res.status(200).send({ raceid: r });
       });
     });
   } else if (op.toLowerCase() === "stop") {
