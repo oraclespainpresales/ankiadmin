@@ -42,6 +42,8 @@ process.on('SIGINT', function() {
 
 // REST engine initial setup
 const PORT = process.env.ADMINPORT || 9009;
+const EVENSERVERHOST = "http://helperhost:10001";
+const EVENTURI = "/event/race";
 const URI = '/admin';
 const RACE = '/race';
 const RACEOP = '/:raceop';
@@ -51,18 +53,72 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(basicAuth( { authorizer: myAuthorizer } ));
 
-// Other cnostants
-const RACEIDFILE = process.env.HOME + '/setup/race_count.dat';
+var eventClient = restify.createJsonClient({
+  url: EVENSERVERHOST,
+  connectTimeout: 1000,
+  requestTimeout: 1000,
+  retry: false,
+  headers: {
+    "content-type": "application/json"
+  }
+});
+
+// Other constants
+const SETUPFOLDER         = process.env.HOME + '/setup';
+const DEMOZONEFILE        = SETUPFOLDER + '/demozone.dat';
+const RACEIDFILE          = SETUPFOLDER + '/race_count.dat';
+const RACESTATUSFILE      = SETUPFOLDER + '/race_status.dat';
+const THERMOLAPFILE       = SETUPFOLDER + '/race_lap_Thermo.dat';
+const SKULLLAPFILE        = SETUPFOLDER + '/race_lap_Skull.dat';
+const GUARDIANLAPFILE     = SETUPFOLDER + '/race_lap_Guardian.dat';
+const GROUNDSHOCKLAPFILE  = SETUPFOLDER + '/race_lap_Ground Shock.dat';
+const LAPFILES = [ THERMOLAPFILE, SKULLLAPFILE, GUARDIANLAPFILE, GROUNDSHOCKLAPFILE ];
 const username = 'pi';
 const hashedPassword = 'sha1$0dca8e1b$1$af147f228501f5a55390ccdf7085e319c513311c';
+const RACING  = "RACING";
+const STOPPED = "STOPPED";
 
-function setRaceId(id, callback) {
-  fs.writeFile(RACEIDFILE, id, callback);
+function setRaceId(id) {
+  fs.writeFileSync(RACEIDFILE, id);
 }
 
-function getRaceId(callback) {
-  fs.readFile(RACEIDFILE, 'utf8', callback);
+function getRaceId() {
+  return fs.readFileSync(RACEIDFILE, 'utf8');
 }
+
+function resetRaceLapForCar(carFile) {
+  fs.writeFileSync(carFile, "0");
+}
+
+function incRaceId() {
+  var i = getRaceId();
+  setRaceId(parseInt(i) + 1);
+}
+
+function changeRaceStatus(status) {
+
+}
+
+function sendEvent(demozone, raceId, status, callback) {
+  var jsonPayload = [{
+    payload: {
+      data: {
+        data_demozone: demozone,
+        raceId: raceId,
+        raceStatus: status
+      }
+    }
+  }];
+  eventClient.post(EVENTURI, jsonPayload, function(err, _req, _res, obj) {
+    if (err) {
+      console.log(err);
+    }
+    callback(err);
+  });
+}
+
+// Read current demozone
+var currentDemozone = fs.readFileSync(DEMOZONEFILE,'utf8');
 
 // REST stuff - BEGIN
 router.post(RACEID + RACEIDPARAM, function(req, res) {
@@ -72,49 +128,40 @@ router.post(RACEID + RACEIDPARAM, function(req, res) {
     res.status(400).send({ error: "You must enter a valid positive number for Race Id"});
     return;
   }
-  setRaceId(newRaceId, (err) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send(err);
-      return;
-    }
-    res.status(204).send();
-  });
+  setRaceIdSync(newRaceId);
+  res.status(204).send();
 });
+
 router.get(RACEID, function(req, res) {
   log.verbose(PROCESS, "Get raceid");
-  getRaceId((err, data) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send(err);
-      return;
-    }
-    res.status(200).send({ raceid: data });
-  });
+  res.status(200).send({ raceid: parseInt(getRaceId()) });
 });
 
 router.put(RACE + RACEOP, function(req, res) {
   log.verbose(PROCESS, "Operate race with: %j", req.params);
   var op = req.params.raceop;
   if (op.toLowerCase() === "start") {
-    getRaceId((err, data) => {
+    incRaceId();
+    LAPFILES.forEach((f) => {
+      resetRaceLapForCar(f);
+    });
+    changeRaceStatus(RACING);
+    sendEvent(currentDemozone, r, RACING, (err) => {
       if (err) {
-        console.log(err);
         res.status(500).send(err);
-        return;
+      } else {
+        res.status(200).send({ status: RACING, raceid: r });
       }
-      var r = parseInt(data) + 1;
-      setRaceId(r, (err) => {
-        if (err) {
-          console.log(err);
-          res.status(500).send(err);
-          return;
-        }
-        res.status(200).send({ raceid: r });
-      });
     });
   } else if (op.toLowerCase() === "stop") {
-    res.status(204).send();
+    changeRaceStatus(STOPPED);
+    sendEvent(currentDemozone, r, STOPPED, (err) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.status(200).send({ status: STOPPED, raceid: r });
+      }
+    });
   } else {
     res.status(404).send();
   }
