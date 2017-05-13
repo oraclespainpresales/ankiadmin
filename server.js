@@ -98,7 +98,7 @@ function incRaceId() {
 }
 
 function changeRaceStatus(status) {
-
+  fs.writeFileSync(RACESTATUSFILE, status);
 }
 
 function sendEvent(demozone, raceId, status, callback) {
