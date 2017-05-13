@@ -187,7 +187,7 @@ router.put(RACE + RACEOP, function(req, res) {
           if (err) {
             res.status(500).send(err);
           } else {
-            res.status(200).send({ status: RACING, raceid: r });
+            res.status(200).send({ status: "SUCCESS", message: "Race successfully started with ID " + r, raceid: r });
           }
         });
       } else if (op === "stop") {
@@ -196,7 +196,7 @@ router.put(RACE + RACEOP, function(req, res) {
           if (err) {
             res.status(500).send(err);
           } else {
-            res.status(200).send({ status: STOPPED, raceid: r });
+            res.status(200).send({ status: "SUCCESS", message: "Race ID " + r + " successfully stopped", raceid: r });
           }
         });
       }
