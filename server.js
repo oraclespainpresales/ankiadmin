@@ -9,6 +9,7 @@ var express = require('express')
   , util = require('util')
   , basicAuth = require('express-basic-auth')
   , passwordHash = require('password-hash')
+  , moment = require('moment')
   , log = require('npmlog-ts')
 ;
 
@@ -44,6 +45,8 @@ process.on('SIGINT', function() {
 const PORT = process.env.ADMINPORT || 9009;
 const EVENSERVERHOST = "http://helperhost:10001";
 const EVENTURI = "/event/race";
+const DBZONEHOST = "https://dbhost";
+const DBZONEURI = "/apex/pdb1/anki/events/{demozone}/{date}";
 const URI = '/admin';
 const RACE = '/race';
 const RACEOP = '/:raceop';
@@ -63,6 +66,11 @@ var eventClient = restify.createJsonClient({
   }
 });
 
+var dbClient = restify.createJsonClient({
+  url: DBZONEHOST,
+  rejectUnauthorized: false
+})
+
 // Other constants
 const SETUPFOLDER         = process.env.HOME + '/setup';
 const DEMOZONEFILE        = SETUPFOLDER + '/demozone.dat';
@@ -77,6 +85,21 @@ const username = 'pi';
 const hashedPassword = 'sha1$0dca8e1b$1$af147f228501f5a55390ccdf7085e319c513311c';
 const RACING  = "RACING";
 const STOPPED = "STOPPED";
+
+function checkScheduledDemo(callback) {
+
+  var URI = DBZONEURI.replace("{demozone}", currentDemozone).replace("date", moment().format("MM-DD-YY"));
+  dbClient.get(URI, function(err, req, res, obj) {
+    if (err) {
+      console.log(err);
+      callback(false);
+    }
+
+    console.log(obj);
+    callback(true);
+
+  });
+}
 
 function setRaceId(id) {
   fs.writeFileSync(RACEIDFILE, id);
@@ -143,31 +166,49 @@ router.get(RACEID, function(req, res) {
 router.put(RACE + RACEOP, function(req, res) {
   log.verbose(PROCESS, "Operate race with: %j", req.params);
   var op = req.params.raceop;
-  if (op.toLowerCase() === "start") {
-    var r = incRaceId();
-    LAPFILES.forEach((f) => {
-      resetRaceLapForCar(f);
-    });
-    changeRaceStatus(RACING);
-    sendEvent(currentDemozone, r, RACING, (err) => {
-      if (err) {
-        res.status(500).send(err);
-      } else {
-        res.status(200).send({ status: RACING, raceid: r });
-      }
-    });
-  } else if (op.toLowerCase() === "stop") {
-    changeRaceStatus(STOPPED);
-    sendEvent(currentDemozone, r, STOPPED, (err) => {
-      if (err) {
-        res.status(500).send(err);
-      } else {
-        res.status(200).send({ status: STOPPED, raceid: r });
-      }
-    });
-  } else {
-    res.status(404).send();
+  if (!op) {
+    res.status(500).send("Missing raceop template parameter");
+    return;
   }
+  op = op.toLowerCase();
+  if ( op !== "start" && op != "stop") {
+    res.status(404).send();
+    return;
+  }
+  if (!checkScheduledDemo()) {
+  }
+
+  checkScheduledDemo((scheduled) => {
+    if (!scheduled) {
+      res.status(403).send("No demo scheduled for today in demozone " + currentDemozone);
+      return;
+    } else {
+      if (op === "start") {
+        var r = incRaceId();
+        LAPFILES.forEach((f) => {
+          resetRaceLapForCar(f);
+        });
+        changeRaceStatus(RACING);
+        sendEvent(currentDemozone, r, RACING, (err) => {
+          if (err) {
+            res.status(500).send(err);
+          } else {
+            res.status(200).send({ status: RACING, raceid: r });
+          }
+        });
+      } else if (op === "stop") {
+        changeRaceStatus(STOPPED);
+        sendEvent(currentDemozone, r, STOPPED, (err) => {
+          if (err) {
+            res.status(500).send(err);
+          } else {
+            res.status(200).send({ status: STOPPED, raceid: r });
+          }
+        });
+      }      
+    }
+  });
+
 });
 
 function myAuthorizer(_username, _password) {

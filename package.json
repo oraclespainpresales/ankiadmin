@@ -13,6 +13,7 @@
     "body-parser": "^1.15.2",
     "express": "^4.13.4",
     "express-basic-auth": "^0.2.3",
+    "moment": "^2.18.1",
     "npmlog-ts": "0.0.1",
     "password-hash": "^1.2.2",
     "restify": "^4.1.1"
