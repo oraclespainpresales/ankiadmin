@@ -94,10 +94,7 @@ function checkScheduledDemo(callback) {
       console.log(err);
       callback(false);
     }
-
-    console.log(obj);
-    callback(true);
-
+    callback((obj.items.length > 0));
   });
 }
 
@@ -174,8 +171,6 @@ router.put(RACE + RACEOP, function(req, res) {
   if ( op !== "start" && op != "stop") {
     res.status(404).send();
     return;
-  }
-  if (!checkScheduledDemo()) {
   }
 
   checkScheduledDemo((scheduled) => {
