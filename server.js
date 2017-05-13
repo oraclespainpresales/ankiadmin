@@ -88,8 +88,7 @@ const STOPPED = "STOPPED";
 
 function checkScheduledDemo(callback) {
 
-  var URI = DBZONEURI.replace("{demozone}", currentDemozone).replace("{date}", moment().format("MM-DD-YY"));
-  console.log(URI);
+  var URI = DBZONEURI.replace("{demozone}", currentDemozone).replace("{date}", moment().format("MM-DD-YYYY"));
   dbClient.get(URI, function(err, req, res, obj) {
     if (err) {
       console.log(err);
@@ -182,7 +181,6 @@ router.put(RACE + RACEOP, function(req, res) {
   checkScheduledDemo((scheduled) => {
     if (!scheduled) {
       res.status(403).send("No demo scheduled for today in demozone " + currentDemozone);
-      return;
     } else {
       if (op === "start") {
         var r = incRaceId();
