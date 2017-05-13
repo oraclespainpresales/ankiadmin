@@ -175,7 +175,7 @@ router.put(RACE + RACEOP, function(req, res) {
 
   checkScheduledDemo((scheduled) => {
     if (!scheduled) {
-      res.status(403).send("No demo scheduled for today in demozone " + currentDemozone);
+      res.status(403).send({ status: "ERROR", message: "No demo scheduled for today in demozone " + currentDemozone });
     } else {
       if (op === "start") {
         var r = incRaceId();
