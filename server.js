@@ -117,6 +117,10 @@ function incRaceId() {
   return newId;
 }
 
+function getRaceStatus() {
+  return fs.readFileSync(RACESTATUSFILE, 'utf8');
+}
+
 function changeRaceStatus(status) {
   fs.writeFileSync(RACESTATUSFILE, status);
 }
@@ -178,6 +182,10 @@ router.put(RACE + RACEOP, function(req, res) {
       res.status(403).send({ status: "ERROR", message: "No demo scheduled for today in demozone " + currentDemozone });
     } else {
       if (op === "start") {
+        if (getRaceStatus() === RACING) {
+          res.status(400).send({ status: "ERROR", message: "Race already started with ID " + getRaceId() });
+          return;
+        }
         var r = incRaceId();
         LAPFILES.forEach((f) => {
           resetRaceLapForCar(f);
@@ -191,6 +199,10 @@ router.put(RACE + RACEOP, function(req, res) {
           }
         });
       } else if (op === "stop") {
+        if (getRaceStatus() === STOPPED) {
+          res.status(400).send({ status: "ERROR", message: "Race already stopped with ID " + getRaceId() });
+          return;
+        }
         var r = getRaceId();
         changeRaceStatus(STOPPED);
         sendEvent(currentDemozone, r, STOPPED, (err) => {
