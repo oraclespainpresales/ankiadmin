@@ -92,7 +92,9 @@ function resetRaceLapForCar(carFile) {
 
 function incRaceId() {
   var i = getRaceId();
-  setRaceId(parseInt(i) + 1);
+  var newId = parseInt(i) + 1;
+  setRaceId(newId);
+  return newId;
 }
 
 function changeRaceStatus(status) {
@@ -119,6 +121,7 @@ function sendEvent(demozone, raceId, status, callback) {
 
 // Read current demozone
 var currentDemozone = fs.readFileSync(DEMOZONEFILE,'utf8');
+log.info("PROCESS", "Working for demozone ", currentDemozone);
 
 // REST stuff - BEGIN
 router.post(RACEID + RACEIDPARAM, function(req, res) {
@@ -141,7 +144,7 @@ router.put(RACE + RACEOP, function(req, res) {
   log.verbose(PROCESS, "Operate race with: %j", req.params);
   var op = req.params.raceop;
   if (op.toLowerCase() === "start") {
-    incRaceId();
+    var r = incRaceId();
     LAPFILES.forEach((f) => {
       resetRaceLapForCar(f);
     });
