@@ -89,7 +89,7 @@ const STOPPED = "STOPPED";
 function checkScheduledDemo(callback) {
 
   var URI = DBZONEURI.replace("{demozone}", currentDemozone).replace("{date}", moment().format("MM-DD-YY"));
-
+  console.log(URI);
   dbClient.get(URI, function(err, req, res, obj) {
     if (err) {
       console.log(err);
