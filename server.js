@@ -191,6 +191,7 @@ router.put(RACE + RACEOP, function(req, res) {
           }
         });
       } else if (op === "stop") {
+        var r = getRaceId();
         changeRaceStatus(STOPPED);
         sendEvent(currentDemozone, r, STOPPED, (err) => {
           if (err) {
