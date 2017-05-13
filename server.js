@@ -88,7 +88,8 @@ const STOPPED = "STOPPED";
 
 function checkScheduledDemo(callback) {
 
-  var URI = DBZONEURI.replace("{demozone}", currentDemozone).replace("date", moment().format("MM-DD-YY"));
+  var URI = DBZONEURI.replace("{demozone}", currentDemozone).replace("{date}", moment().format("MM-DD-YY"));
+
   dbClient.get(URI, function(err, req, res, obj) {
     if (err) {
       console.log(err);
@@ -205,7 +206,7 @@ router.put(RACE + RACEOP, function(req, res) {
             res.status(200).send({ status: STOPPED, raceid: r });
           }
         });
-      }      
+      }
     }
   });
 
