@@ -121,7 +121,7 @@ function sendEvent(demozone, raceId, status, callback) {
 
 // Read current demozone
 var currentDemozone = fs.readFileSync(DEMOZONEFILE,'utf8');
-log.info("PROCESS", "Working for demozone ", currentDemozone);
+log.info("PROCESS", "Working for demozone: '%s'", currentDemozone);
 
 // REST stuff - BEGIN
 router.post(RACEID + RACEIDPARAM, function(req, res) {
