@@ -43,10 +43,11 @@ process.on('SIGINT', function() {
 
 // REST engine initial setup
 const PORT = process.env.ADMINPORT || 9009;
-const EVENSERVERHOST = "http://proxy.digitalpracticespain.com:10001";
+const EVENSERVERHOST = "http://new.proxy.digitalpracticespain.com:10001";
 const EVENTURI = "/event/race";
-const DBZONEHOST = "https://apex.digitalpracticespain.com";
-const DBZONEURI = "/apex/pdb1/anki/events/{demozone}/{date}";
+const DBZONEHOST = "https://new.apex.digitalpracticespain.com";
+//const DBZONEURI = "/apex/pdb1/anki/events/{demozone}/{date}";
+const DBZONEURI = "/ords/pdb1/anki/events/{demozone}/{date}";
 const URI = '/admin';
 const RACE = '/race';
 const RACEOP = '/:raceop';
