@@ -57,6 +57,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(basicAuth( { authorizer: myAuthorizer } ));
 
+console.log("EVENSERVERHOST: " + EVENSERVERHOST);
+console.log("DBZONEHOST: " + DBZONEHOST);
+
 var eventClient = restify.createJsonClient({
   url: EVENSERVERHOST,
   connectTimeout: 1000,
