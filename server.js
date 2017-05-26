@@ -46,8 +46,9 @@ const PORT = process.env.ADMINPORT || 9009;
 const EVENSERVERHOST = "http://" + process.env.EVENTSERVER + ":10001";
 const EVENTURI = "/event/race";
 const DBZONEHOST = "https://" + process.env.DBSERVER;
-const DBZONEURI = "/apex/pdb1/anki/events/{demozone}/{date}";
-//const DBZONEURI = "/ords/pdb1/anki/events/{demozone}/{date}";
+//const DBZONEURI = "/apex/pdb1/anki/events/{demozone}/{date}";
+const DBZONEURI   = "/ords/pdb1/anki/events/{demozone}/{date}";
+const IOTSETUPURI = "/ords/pdb1/anki/iotcs/setup/{demozone}";
 const URI = '/admin';
 const RACE = '/race';
 const RACEOP = '/:raceop';
@@ -91,14 +92,32 @@ const RACING  = "RACING";
 const STOPPED = "STOPPED";
 
 function checkScheduledDemo(callback) {
-
   var URI = DBZONEURI.replace("{demozone}", currentDemozone).replace("{date}", moment().format("MM-DD-YYYY"));
   dbClient.get(URI, function(err, req, res, obj) {
     if (err) {
       console.log(err);
       callback(false);
+      return;
     }
     callback((obj.items.length > 0));
+  });
+}
+
+function getIoTCSSetup(callback) {
+  var URI = IOTSETUPURI.replace("{demozone}", currentDemozone);
+  dbClient.get(URI, function(err, req, res, obj) {
+    if (err) {
+      console.log(err);
+      callback(undefined);
+      return;
+    }
+    if ( obj.items.length > 0) {
+      var DOCS = obj.items[0];
+      callback(obj.items[0]);
+    } else {
+      log.error(PROCESS, "NO IOTCS SETUP INFO FOUND IN THE DATABASE FOR DEMOZONE " + currentDemozone);
+      callback(undefined);
+    }
   });
 }
 
@@ -214,6 +233,24 @@ router.put(RACE + RACEOP, function(req, res) {
             res.status(500).send(err);
           } else {
             res.status(200).send({ status: "SUCCESS", message: "Race ID " + r + " successfully stopped", raceid: r });
+            // Synch BICS
+            getIoTCSSetup((iot) => {
+              if (iot) {
+                // {"demozone":"MADRID","identitydomain":"gse00011668","hostname":"129.150.71.46","port":443,"username":"adminuser","password":"IoTRocks1#","applicationid":"AAAAAATJFQ0A-AE","integrationid":"AAAAAATVCIIA-AE"}
+                var IOTHOST = "https://" + iot.hostname + ":" + iot.port;
+                var IOTURI  = "/iot/api/v2/apps/" + iot.applicationid + "/integrations/" + iot.integrationid + "/sync/now";
+                var iotClient = restify.createJsonClient({
+                  url: IOTHOST,
+                  headers: { Authorization: 'Basic ' + new Buffer(iot.username + ":" + iot.password).toString('base64') },
+                  rejectUnauthorized: false
+                });
+                iotClient.post(URI, function(err, req, res, obj) {
+                  if (err || res.statusCode != 202) {
+                    log.error(PROCESS, "Error synch'ing BICS: %d", res.statusCode);
+                  }
+                });
+              }
+            });
           }
         });
       }
