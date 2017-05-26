@@ -58,9 +58,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(basicAuth( { authorizer: myAuthorizer } ));
 
-console.log("EVENSERVERHOST: " + EVENSERVERHOST);
-console.log("DBZONEHOST: " + DBZONEHOST);
-
 var eventClient = restify.createJsonClient({
   url: EVENSERVERHOST,
   connectTimeout: 1000,
@@ -238,13 +235,13 @@ router.put(RACE + RACEOP, function(req, res) {
               if (iot) {
                 // {"demozone":"MADRID","identitydomain":"gse00011668","hostname":"129.150.71.46","port":443,"username":"adminuser","password":"IoTRocks1#","applicationid":"AAAAAATJFQ0A-AE","integrationid":"AAAAAATVCIIA-AE"}
                 var IOTHOST = "https://" + iot.hostname + ":" + iot.port;
-                var IOTURI  = "/iot/api/v2/apps/" + iot.applicationid + "/integrations/" + iot.integrationid + "/sync/now";
+                var IOTURI  = "/iot/api/v2/apps/" + iot.applicationid + "/integrations/" + iot.integrationid + "/sync/now";                
                 var iotClient = restify.createJsonClient({
                   url: IOTHOST,
                   headers: { Authorization: 'Basic ' + new Buffer(iot.username + ":" + iot.password).toString('base64') },
                   rejectUnauthorized: false
                 });
-                iotClient.post(URI, function(err, req, res, obj) {
+                iotClient.post(IOTURI, function(err, req, res, obj) {
                   if (err || res.statusCode != 202) {
                     log.error(PROCESS, "Error synch'ing BICS: %d", res.statusCode);
                   }
