@@ -175,7 +175,7 @@ router.post(RACEID + RACEIDPARAM, function(req, res) {
     res.status(400).send({ error: "You must enter a valid positive number for Race Id"});
     return;
   }
-  setRaceIdSync(newRaceId);
+  setRaceId(newRaceId);
   res.status(204).send();
 });
 
@@ -233,9 +233,8 @@ router.put(RACE + RACEOP, function(req, res) {
             // Synch BICS
             getIoTCSSetup((iot) => {
               if (iot) {
-                // {"demozone":"MADRID","identitydomain":"gse00011668","hostname":"129.150.71.46","port":443,"username":"adminuser","password":"IoTRocks1#","applicationid":"AAAAAATJFQ0A-AE","integrationid":"AAAAAATVCIIA-AE"}
                 var IOTHOST = "https://" + iot.hostname + ":" + iot.port;
-                var IOTURI  = "/iot/api/v2/apps/" + iot.applicationid + "/integrations/" + iot.integrationid + "/sync/now";                
+                var IOTURI  = "/iot/api/v2/apps/" + iot.applicationid + "/integrations/" + iot.integrationid + "/sync/now";
                 var iotClient = restify.createJsonClient({
                   url: IOTHOST,
                   headers: { Authorization: 'Basic ' + new Buffer(iot.username + ":" + iot.password).toString('base64') },
